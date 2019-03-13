@@ -32,11 +32,10 @@ app.post('/todo', (req, res) => {
 
 app.get("/todo", (req, res) => {
     Todo.find()
-        .then((err, docs) => {
-            if(err){
-                return res.status(400).send(err);
-            }
+        .then((docs) => {
             res.send(docs);
+        },(err) =>{
+            res.status(400).send(err);
         })
 })
 

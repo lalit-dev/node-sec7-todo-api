@@ -4,11 +4,18 @@ const expect = require("expect");
 var {Todo} = require('./../models/todo');
 var {app} = require('./server');
 
-
+var todos = [{
+    task: 'first task'
+},{
+    task:'second task'
+}]
 
 beforeEach( (done) => {
     Todo.deleteMany({})
         .then( () => {
+            return Todo.insertMany(todos)
+        })
+        .then(() => {
             done();
         })
 })
@@ -29,7 +36,7 @@ describe('create new Todo', () => {
                 if(err){
                     return done(err);
                 }
-                Todo.find()
+                Todo.find({task:task})
                     .then((doc) =>{
                         // if(!err){
                             expect(doc.length).toBe(1);
@@ -56,7 +63,7 @@ describe('create new Todo', () => {
 
                 Todo.find()
                     .then((docs) => {
-                        expect(docs.length).toBe(0);
+                        expect(docs.length).toBe(2);
                         // expect(docs[0].task).toBe(task)
                         done()
                     })
@@ -64,5 +71,17 @@ describe('create new Todo', () => {
                         done(err)
                     })
             })
+    })
+})
+
+describe('FETCH /todo', () =>{
+    it('fetch todo', (done) =>{
+        request(app)
+            .get('/todo')
+            .expect(200)
+            .expect((res) =>{
+                expect(res.body.length).toBe(2);
+            })
+            .end(done)
     })
 })
