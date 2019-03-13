@@ -30,6 +30,22 @@ app.post('/todo', (req, res) => {
         })
 })
 
+app.post('/user', (req, res) => {
+    console.log("Req.body = ",JSON.stringify(req.body, undefined, 2));
+    var newUser = new User({
+        email: 'email.com'
+    })
+
+    newUser.save()
+        .then((doc) => {
+            // console.log("**Document: ",doc);
+            res.send(doc);
+        }, (err) => {
+            // console.log("**Error: ",err);
+            res.status(400).send(err);
+        })
+})
+
 app.get("/todo", (req, res) => {
     Todo.find()
         .then((docs) => {
