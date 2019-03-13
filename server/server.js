@@ -8,7 +8,9 @@ var {User} = require('../models/user');
 // console.log("express = ",express)
 var app = express();
 
-app.use(bodyParser.json());
+// app.use(bodyParser.json());
+app.use(express.json());
+
 
 app.post('/todo', (req, res) => {
     console.log("Req.body = ",JSON.stringify(req.body, undefined, 2));
@@ -20,10 +22,10 @@ app.post('/todo', (req, res) => {
 
     newtodo.save()
         .then((doc) => {
-            console.log("**Document: ",doc);
+            // console.log("**Document: ",doc);
             res.send(doc);
         }, (err) => {
-            console.log("**Error: ",err);
+            // console.log("**Error: ",err);
             res.status(400).send(err);
         })
 })
@@ -31,5 +33,7 @@ app.post('/todo', (req, res) => {
 app.listen(5000, () => {
     console.log("connected to database");
 })
+
+module.exports = {app};
 
 
