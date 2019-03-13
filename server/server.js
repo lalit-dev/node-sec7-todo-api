@@ -30,6 +30,16 @@ app.post('/todo', (req, res) => {
         })
 })
 
+app.get("/todo", (req, res) => {
+    Todo.find()
+        .then((err, docs) => {
+            if(err){
+                return res.status(400).send(err);
+            }
+            res.send(docs);
+        })
+})
+
 app.listen(5000, () => {
     console.log("connected to database");
 })
