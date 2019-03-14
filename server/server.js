@@ -8,7 +8,7 @@ var {User} = require('../models/user');
 
 // console.log("express = ",express)
 var app = express();
-
+var port = process.env.PORT || 5000;
 // app.use(bodyParser.json());
 app.use(express.json());
 
@@ -93,8 +93,8 @@ app.get("/todo", (req, res) => {
         })
 })
 
-app.listen(5000, () => {
-    console.log("connected to database");
+app.listen(port, () => {
+    console.log(`connected to Port: ${port}`);
 })
 
 module.exports = {app};
