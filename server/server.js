@@ -14,7 +14,7 @@ app.use(express.json());
 
 
 app.post('/todo', (req, res) => {
-    console.log("Req.body = ",JSON.stringify(req.body, undefined, 2));
+    // console.log("Req.body = ",JSON.stringify(req.body, undefined, 2));
     var newtodo = new Todo({
         completed: req.body.completed,
         completedAt: req.body.completedAt,
@@ -32,7 +32,7 @@ app.post('/todo', (req, res) => {
 })
 
 app.post('/user', (req, res) => {
-    console.log("Req.body = ",JSON.stringify(req.body, undefined, 2));
+    // console.log("Req.body = ",JSON.stringify(req.body, undefined, 2));
     var newUser = new User({
         email: 'email.com'
     })
@@ -61,6 +61,26 @@ app.get('/user/:id', (req, res) => {
             res.send(docs);
         }, (err) => {
             res.status(400).send(err)
+        })
+})
+
+app.get('/todo/:id', (req, res) => {
+    var id = req.params.id;
+    if(!ObjectID.isValid(id)){
+        return res.status(404).send({errorMessage: "Id is not valid"})
+    }
+
+    Todo.findById(id)
+        .then((docs) => {
+            if(!docs){
+                return res.status(404).send({errorMessage: "no document found"})
+            }
+            res.send({docs,randomText:'randomText'});
+        }, (err) => {
+            res.status(400).send(err)
+        })
+        .catch((err) => {
+            return res.status(400).send({err});
         })
 })
 
