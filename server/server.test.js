@@ -125,3 +125,36 @@ describe("GET /todo/:id", () => {
             .end(done);
     })
 })
+
+describe('DELETE /todo/:id', () => {
+    it('Invalid ID', (done) => {
+        request(app)
+        .delete(`/todo/123ddd`)
+        .expect(404)
+        .expect((res) => {
+            expect(res.body.errorMessage).toBe('Invalid Id');
+        })
+        .end(done);
+    })
+
+    it("document doesn't exist", (done) => {
+        var hexId = new ObjectID().toHexString();
+        request(app)
+            .delete(`/todo/${hexId}`)
+            .expect(404)
+            .expect((res) => {
+                expect(res.body.errorMessage).toBe('document not found');
+            })
+            .end(done);
+    })
+
+    it("document Deleted", (done) => {
+        request(app)
+            .delete(`/todo/${todos[1]._id}`)
+            .expect(200)
+            .expect((res) => {
+                expect(res.body.doc.task).toBe('second task');
+            })
+            .end(done);
+    })
+})
