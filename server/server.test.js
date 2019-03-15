@@ -10,7 +10,8 @@ var todos = [{
     task: 'first task'
 },{
     _id: new ObjectID(),
-    task:'second task'
+    task:'second task',
+    completed: true
 }]
 
 beforeEach( (done) => {
@@ -20,6 +21,9 @@ beforeEach( (done) => {
         })
         .then(() => {
             done();
+        })
+        .catch((err) => {
+            done(err);
         })
 })
 
@@ -154,6 +158,40 @@ describe('DELETE /todo/:id', () => {
             .expect(200)
             .expect((res) => {
                 expect(res.body.doc.task).toBe('second task');
+            })
+            .end(done);
+    })
+})
+
+describe("PATCH /todo/:id", () => {
+    it("should update todo", (done) => {
+        request(app)
+            .patch(`/todo/${todos[0]._id}`)
+            .send({
+                task:"task 1 updated",
+                completed: true
+            })
+            .expect(200)
+            .expect((res) => {
+                expect(res.body.todo.task).toBe("task 1 updated");
+                expect(res.body.todo.completed).toBe(true);
+                // expect(res.body.todo.completedAt).toBeA('number');
+            })
+            .end(done);
+    })
+
+    it("should clear completedAt when completed is false ", (done) => {
+        request(app)
+            .patch(`/todo/${todos[1]._id}`)
+            .send({
+                task:"task 2 updated ",
+                completed: false
+            })
+            .expect(200)
+            .expect((res) => {
+                expect(res.body.todo.task).toBe("task 2 updated");
+                expect(res.body.todo.completed).toBe(false);
+                expect(res.body.todo.completedAt).toBeNull();
             })
             .end(done);
     })
