@@ -1,3 +1,5 @@
+require('./../config/config')
+
 const express = require('express');
 const bodyParser = require('body-parser');
 const {ObjectID} = require('mongodb')
@@ -34,16 +36,19 @@ app.post('/todo', (req, res) => {
 
 app.post('/user', (req, res) => {
     // console.log("Req.body = ",JSON.stringify(req.body, undefined, 2));
-    var newUser = new User({
-        email: 'email.com'
-    })
+    var body = _.pick(req.body, ['email', 'password']);
+    console.log("BODY of /user ",body)
+    var newUser = new User(body);
 
     newUser.save()
-        .then((doc) => {
-            // console.log("**Document: ",doc);
-            res.send(doc);
+        .then(() => {
+            console.log("saved document...")
+            return newUser.generateAuthToken()
+        })
+        .then((token) => {
+            console.log("saved token...",token);
+            res.header('auth-x',token).send(newUser);
         }, (err) => {
-            // console.log("**Error: ",err);
             res.status(400).send(err);
         })
 })
