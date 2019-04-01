@@ -1,31 +1,41 @@
 const request = require("supertest");
 const expect = require("expect");
-const {ObjectID} = require("mongodb");
+const { ObjectID } = require("mongodb");
 
-var {Todo} = require('./../models/todo');
-var {app} = require('./server');
+var { Todo } = require('./../models/todo');
+var { User } = require('./../models/user');
+var { app } = require('./server');
+var {todos, populateTodos, users, populateUsers} = require('./../seed/seed');
 
-var todos = [{
-    _id: new ObjectID(),
-    task: 'first task'
-},{
-    _id: new ObjectID(),
-    task:'second task',
-    completed: true
-}]
+// before(() => {
+//     this.timeout(10000);
+// });
+// describe("reset Todo and User", (done) => {
+    beforeEach(populateUsers);
+    beforeEach(populateTodos);
+// })
+// const todos = [{
+//     _id: new ObjectID(),
+//     task: 'first task'
+// }, {
+//     _id: new ObjectID(),
+//     task: 'second task',
+//     completed: true
+// }]
 
-beforeEach( (done) => {
-    Todo.deleteMany({})
-        .then( () => {
-            return Todo.insertMany(todos)
-        })
-        .then(() => {
-            done();
-        })
-        .catch((err) => {
-            done(err);
-        })
-})
+
+// beforeEach((done) => {
+//     Todo.deleteMany({})
+//         .then(() => {
+//             return Todo.insertMany(todos)
+//         })
+//         .then(() => {
+//             return done();
+//         })
+//         .catch((err) => {
+//             return done();
+//         })
+// })
 
 
 describe('create new Todo', () => {
@@ -34,37 +44,37 @@ describe('create new Todo', () => {
 
         request(app)
             .post('/todo')
-            .send({task})
+            .send({ task })
             .expect(200)
             .expect((res) => {
                 expect(res.body.task).toBe(task)
             })
             .end((err, res) => {
-                if(err){
+                if (err) {
                     return done(err);
                 }
-                Todo.find({task:task})
-                    .then((doc) =>{
-                        // if(!err){
-                            expect(doc.length).toBe(1);
-                            expect(doc[0].task).toBe(task);
-                            done();
-                        // }
+                Todo.find({ task: task })
+                    .then((doc) => {
+                        if(!err){
+                        expect(doc.length).toBe(1);
+                        expect(doc[0].task).toBe(task);
+                        done();
+                        }
                     })
-                    .catch( (err) => {
+                    .catch((err) => {
                         done(err);
                     })
             })
     })
 
     it("should not create todo with invalid data", (done) => {
-        var task = 'invalind task'
+        var task = 'invalid task'
         request(app)
             .post("/todo")
             .send()
             .expect(400)
             .end((err, res) => {
-                if(err){
+                if (err) {
                     return done(err);
                 }
 
@@ -74,19 +84,19 @@ describe('create new Todo', () => {
                         // expect(docs[0].task).toBe(task)
                         done()
                     })
-                    .catch((err) =>{
+                    .catch((err) => {
                         done(err)
                     })
             })
     })
 })
 
-describe('FETCH /todo', () =>{
-    it('fetch todo', (done) =>{
+describe('FETCH /todo', () => {
+    it('fetch todo', (done) => {
         request(app)
             .get('/todo')
             .expect(200)
-            .expect((res) =>{
+            .expect((res) => {
                 expect(res.body.length).toBe(2);
             })
             .end(done)
@@ -99,7 +109,6 @@ describe("GET /todo/:id", () => {
             .get(`/todo/1234`)
             .expect(404)
             .expect((res) => {
-                // console.log("it should return invalid id",res.body);
                 expect(res.body.errorMessage).toBe("Id is not valid");
             })
             .end(done);
@@ -111,7 +120,6 @@ describe("GET /todo/:id", () => {
             .get(`/todo/${hexId}`)
             .expect(404)
             .expect((res) => {
-                // console.log("document should be empty",res.body);
                 expect(res.body.errorMessage).toBe("no document found");
             })
             .end(done);
@@ -121,8 +129,7 @@ describe("GET /todo/:id", () => {
         request(app)
             .get(`/todo/${todos[0]._id}`)
             .expect(200)
-            .expect( (res) => {
-                // console.log("Valid id and document found",res.body);
+            .expect((res) => {
                 // expect(res.body.doc.length).toBe(1);
                 expect(res.body.docs.task).toBe('first task');
             })
@@ -133,12 +140,12 @@ describe("GET /todo/:id", () => {
 describe('DELETE /todo/:id', () => {
     it('Invalid ID', (done) => {
         request(app)
-        .delete(`/todo/123ddd`)
-        .expect(404)
-        .expect((res) => {
-            expect(res.body.errorMessage).toBe('Invalid Id');
-        })
-        .end(done);
+            .delete(`/todo/123ddd`)
+            .expect(404)
+            .expect((res) => {
+                expect(res.body.errorMessage).toBe('Invalid Id');
+            })
+            .end(done);
     })
 
     it("document doesn't exist", (done) => {
@@ -168,7 +175,7 @@ describe("PATCH /todo/:id", () => {
         request(app)
             .patch(`/todo/${todos[0]._id}`)
             .send({
-                task:"task 1 updated",
+                task: "task 1 updated",
                 completed: true
             })
             .expect(200)
@@ -184,7 +191,7 @@ describe("PATCH /todo/:id", () => {
         request(app)
             .patch(`/todo/${todos[1]._id}`)
             .send({
-                task:"task 2 updated ",
+                task: "task 2 updated ",
                 completed: false
             })
             .expect(200)
@@ -194,5 +201,89 @@ describe("PATCH /todo/:id", () => {
                 expect(res.body.todo.completedAt).toBeNull();
             })
             .end(done);
+    })
+})
+
+describe('GET users/me', () => {
+    it('should return user if authenticated', (done) => {
+        request(app)
+            .get('/users/me')
+            .set('x-auth', users[0].tokens[0].token)
+            .expect(200)
+            .expect((res) => {
+                expect(res.body._id).toBe(users[0]._id.toHexString());
+                expect(res.body.email).toBe(users[0].email)
+            })
+            .end(done);
+    })
+
+    it('should return 401 if not authorised', (done) => {
+        request(app)
+            .get('/users/me')
+            .expect(401)
+            .expect((res) => {
+                expect(res.body).toEqual({});
+            })
+            .end(done);
+    })
+})
+
+describe('POST /user', () => {
+    it('should create user', (done) => {
+        var user = {
+            email: '3@abc.com',
+            password: '123mnb!'
+        }
+        request(app)
+            .post('/user')
+            .send(user)
+            .expect(200)
+            .expect((res) => {
+                // console.log("$$$$$$$$$$$$$$$$$$should create user: ",res.body);
+                expect(res.headers['auth-x']).toBeTruthy();
+                expect(res.body.email).toBe(user.email);
+                expect(res.body._id).toBeTruthy();
+            })
+            .end((err) => {
+                if(err){
+                    // console.log("ERROR OCCURED",err);
+                    return done(err);
+                }
+                
+                User.findOne({email: user.email})
+                    .then((newUser) => {
+                        // console.log("USER FOUND",newUser);
+                        expect(newUser).toBeTruthy();
+                        expect(newUser.password).not.toBe(user.password);
+                        done();
+                    })
+            })
+    })
+
+    it('should return validation error if request is invalid ', (done) => {
+        var user = {
+            email: '4@5@2.3',
+            password: '123mnb!'
+        }
+        request(app)
+            .post('/user')
+            .send(user)
+            .expect(400)
+            .end(done);
+            
+    })
+
+    it('should not create error if email is in use', (done) => {
+        var user = {
+            email: "1@abc.com",  //email is already in use
+            password: '123mnb!'
+        }
+
+        request(app)
+            .post('/user')
+            .send(user)
+            .expect(400)
+            .end(done);
+
     })
 })

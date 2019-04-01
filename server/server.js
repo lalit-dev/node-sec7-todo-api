@@ -8,14 +8,15 @@ const _ = require('lodash');
 var mongoose = require("../db/setup");
 var {Todo} = require('../models/todo');
 var {User} = require('../models/user');
+var {authenticate} = require('./../middlewares/authenticate');
 
 // console.log("express = ",express)
 var app = express();
 var port = process.env.PORT || 5000;
-// app.use(bodyParser.json());
+app.use(bodyParser.json());
 app.use(express.json());
 
-
+// PUBLIC API *******************************************************************************
 app.post('/todo', (req, res) => {
     // console.log("Req.body = ",JSON.stringify(req.body, undefined, 2));
     var newtodo = new Todo({
@@ -37,16 +38,17 @@ app.post('/todo', (req, res) => {
 app.post('/user', (req, res) => {
     // console.log("Req.body = ",JSON.stringify(req.body, undefined, 2));
     var body = _.pick(req.body, ['email', 'password']);
-    console.log("BODY of /user ",body)
+    // console.log("BODY of /user ",body)
     var newUser = new User(body);
 
     newUser.save()
         .then(() => {
-            console.log("saved document...")
+            // console.log("saved document...")
             return newUser.generateAuthToken()
         })
         .then((token) => {
-            console.log("saved token...",token);
+            // console.log("saved token...",token);
+            // console.log("NEWUSER = ",newUser);
             res.header('auth-x',token).send(newUser);
         }, (err) => {
             res.status(400).send(err);
@@ -144,6 +146,16 @@ app.patch('/todo/:id', (req, res) => {
     .catch((err) => {
         res.status(400).send({err});
     })
+})
+// ***************************************************
+
+
+// PRIVATE API  *******************************************************************
+
+app.get("/users/me", authenticate, (req, res) => {
+    // console.log("req = ", req.header);
+    res.send(req.user);
+    
 })
 
 app.listen(port, () => {
