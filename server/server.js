@@ -17,6 +17,10 @@ var port = process.env.PORT || 5000;
 app.use(bodyParser.json());
 app.use(express.json());
 
+app.listen(port, () => {
+    console.log(`connected to Port: ${port}`);
+})
+
 // PUBLIC API *******************************************************************************
 app.post('/todo', (req, res) => {
     // console.log("Req.body = ",JSON.stringify(req.body, undefined, 2));
@@ -210,9 +214,7 @@ app.delete('/users/me/token', authenticate, (req, res) => {
 })
 
 
-app.listen(port, () => {
-    console.log(`connected to Port: ${port}`);
-})
+
 
 module.exports = {app};
 
