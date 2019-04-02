@@ -61,9 +61,18 @@ userSchema.methods.generateAuthToken = function(){
         .catch(() => {
             // console.log("error OCCURED..");
         })
+}
 
+userSchema.methods.deleteToken = function(recievedToken){
+    var user = this;
 
-
+    return user.updateOne({
+        $pull: {
+            tokens: {
+                token: recievedToken
+            }
+        }
+    })
 }
 
 userSchema.statics.findByToken = function(token){

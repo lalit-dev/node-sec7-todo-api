@@ -149,21 +149,13 @@ app.patch('/todo/:id', (req, res) => {
         res.status(400).send({err});
     })
 })
-// ***************************************************
 
-
-// PRIVATE API  *******************************************************************
-
-app.get("/users/me", authenticate, (req, res) => {
-    // console.log("req = ", req.header);
-    res.send(req.user);
-    
-})
 
 app.post("/users/login", (req, res) => {
     var usr;
     // console.log('req.body = ',req.body);
     let body = _.pick(req.body, ['email', 'password']);
+    //  APPROACH  -----------  1
     // User.findOne({email: body.email})
     //     .then((user) => {
     //         usr = user
@@ -179,6 +171,7 @@ app.post("/users/login", (req, res) => {
     //         }
     //     })
 
+    //  APPROACH  -----------  2
     User.findByCredentials(body)
         .then((user) => {
             //  console.log("user recieved in server.js")
@@ -194,6 +187,28 @@ app.post("/users/login", (req, res) => {
         })
 
 })
+// ***************************************************
+
+
+// PRIVATE API  *******************************************************************
+
+app.get("/users/me", authenticate, (req, res) => {
+    // console.log("req = ", req.header);
+    res.send(req.user);
+    
+})
+
+app.delete('/users/me/token', authenticate, (req, res) => {
+
+    req.user.deleteToken(req.token)
+        .then( (result) => {
+            res.send();
+        },
+        (err) => {
+            res.status(401).send()
+        })
+})
+
 
 app.listen(port, () => {
     console.log(`connected to Port: ${port}`);
