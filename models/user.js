@@ -36,14 +36,14 @@ var userSchema = mongoose.Schema({
 
 userSchema.methods.toJSON = function(){
     var user = this;
-    // console.log("USER in toJSON func = ",user);
+    console.log("\n\nUSER in toJSON func = ",user);
     var userObject = user.toObject();
 
     return _.pick(userObject, ['_id', 'email'])
 }
 
 userSchema.methods.generateAuthToken = function(){
-    // console.log("generating token\n\n")
+    // console.log("\n\ngenerating token")
     var user = this;
     // console.log("USER in user.js = ",user);
 
@@ -83,16 +83,38 @@ userSchema.statics.findByToken = function(token){
         'tokens.token': token,
         'tokens.access': decoded.access
     });
+}
 
+userSchema.statics.findByCredentials = function(body) {
+    var User = this;
 
+    return User.findOne({email: body.email})
+        .then((user) => {
+            if(!user){
+                // console.log("User not found");
+                return Promise.reject();
+            }
+            console.log("USER found: ",user);
+            return new Promise( (resolve, reject) => {
+                bcrypt.compare(body.password, user.password)
+                    .then((result) => {
+                        // console.log("result of bcrypt.compare: ", result)
+                        if(result){
+                            resolve(user);
+                        }else{
+                            reject();
+                        }
+                    })
+            })
+        })
 }
 
 userSchema.pre('save', function(next){
     var user = this;
-    // console.log("");
+    // console.log("\n\n");
     // console.log("before saving document: ",user);
     if(user.isModified('password')){
-        bcrypt.genSalt(10, (err, salt) => {
+        bcrypt.genSalt(5, (err, salt) => {
             // console.log("salt is generated: ",salt);
             bcrypt.hash(user.password, salt, (e, hash) => {
                 if(!e){

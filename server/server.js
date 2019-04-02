@@ -4,6 +4,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const {ObjectID} = require('mongodb')
 const _ = require('lodash');
+const bcrypt = require('bcryptjs');
 
 var mongoose = require("../db/setup");
 var {Todo} = require('../models/todo');
@@ -56,6 +57,7 @@ app.post('/user', (req, res) => {
 })
 
 app.get('/user/:id', (req, res) => {
+    console.log("!!!!!!!!!!!!!!!!!!!!!!!!")
     var id = req.params.id;
     if(!ObjectID.isValid(id)){
         return res.status(404).send({errorMessage: "Id is not valid"})
@@ -156,6 +158,41 @@ app.get("/users/me", authenticate, (req, res) => {
     // console.log("req = ", req.header);
     res.send(req.user);
     
+})
+
+app.post("/users/login", (req, res) => {
+    var usr;
+    // console.log('req.body = ',req.body);
+    let body = _.pick(req.body, ['email', 'password']);
+    // User.findOne({email: body.email})
+    //     .then((user) => {
+    //         usr = user
+    //         console.log("USER ", user);
+    //         return bcrypt.compare(body.password, user.password);
+    //     })
+    //     .then((response) => {
+    //         console.log("RESPONSE   ",response)
+    //         if(response == true){
+    //             res.send(usr);
+    //         } else{
+    //             res.status(400).send();
+    //         }
+    //     })
+
+    User.findByCredentials(body)
+        .then((user) => {
+            //  console.log("user recieved in server.js")
+            return user.generateAuthToken()
+                .then((token) => {
+                    // console.log("NEW TOKEN recieved in server.js")
+                    res.header('x-auth',token).send(user)
+                })
+        })
+        .catch((e) => {
+            // console.log("error recieved in server.js",e)
+            res.status(400).send();
+        })
+
 })
 
 app.listen(port, () => {
