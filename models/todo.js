@@ -17,6 +17,10 @@ var Todo = mongoose.model('Todo', {
     },
     assignedTo:{
         type:String
+    },
+    _creator:{
+        type: mongoose.Schema.Types.ObjectId,
+        required: true    
     }
     
 })

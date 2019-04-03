@@ -22,23 +22,7 @@ app.listen(port, () => {
 })
 
 // PUBLIC API *******************************************************************************
-app.post('/todo', (req, res) => {
-    // console.log("Req.body = ",JSON.stringify(req.body, undefined, 2));
-    var newtodo = new Todo({
-        completed: req.body.completed,
-        completedAt: req.body.completedAt,
-        task: req.body.task
-    })
 
-    newtodo.save()
-        .then((doc) => {
-            // console.log("**Document: ",doc);
-            res.send(doc);
-        }, (err) => {
-            // console.log("**Error: ",err);
-            res.status(400).send(err);
-        })
-})
 
 app.post('/user', (req, res) => {
     // console.log("Req.body = ",JSON.stringify(req.body, undefined, 2));
@@ -54,7 +38,7 @@ app.post('/user', (req, res) => {
         .then((token) => {
             // console.log("saved token...",token);
             // console.log("NEWUSER = ",newUser);
-            res.header('auth-x',token).send(newUser);
+            res.header('x-auth',token).send(newUser);
         }, (err) => {
             res.status(400).send(err);
         })
@@ -77,83 +61,6 @@ app.get('/user/:id', (req, res) => {
             res.status(400).send(err)
         })
 })
-
-app.get('/todo/:id', (req, res) => {
-    var id = req.params.id;
-    if(!ObjectID.isValid(id)){
-        return res.status(404).send({errorMessage: "Id is not valid"})
-    }
-
-    Todo.findById(id)
-        .then((docs) => {
-            if(!docs){
-                return res.status(404).send({errorMessage: "no document found"})
-            }
-            res.send({docs,randomText:'randomText'});
-        }, (err) => {
-            res.status(400).send(err)
-        })
-        .catch((err) => {
-            return res.status(400).send({err});
-        })
-})
-
-app.get("/todo", (req, res) => {
-    Todo.find()
-        .then((docs) => {
-            res.send(docs);
-        },(err) =>{
-            res.status(400).send(err);
-        })
-})
-
-app.delete("/todo/:id", (req, res) => {
-    var id = req.params.id;
-
-    if(!ObjectID.isValid(id)){
-        return res.status(404).send({errorMessage: 'Invalid Id'});
-    }
-    Todo.findByIdAndDelete(id)
-        .then( (doc) => {
-            if(!doc){
-                return res.status(404).send({errorMessage: 'document not found'});
-            }
-            res.send({doc});
-        }, (err) => {
-            res.statue(400).send(err);
-        })
-})
-
-app.patch('/todo/:id', (req, res) => {
-    var id = req.params.id;
-
-    var body = _.pick(req.body, ['task', 'completed']);
-
-    if(!ObjectID.isValid(id)){
-        return res.status(404).send();
-    }
-
-    if(_.isBoolean(body.completed) && body.completed){
-        body.completedAt = new Date();
-    }else{
-        body.completed = false;
-        body.completedAt = null;
-    }
-
-    Todo.findOneAndUpdate({_id: id}, {
-        $set: body
-    },{new: true})
-    .then((todo) => {
-        if(!todo){
-            return res.status(404).send({errorMessage: "document not found"});
-        }
-        res.send({todo});
-    })
-    .catch((err) => {
-        res.status(400).send({err});
-    })
-})
-
 
 app.post("/users/login", (req, res) => {
     var usr;
@@ -212,6 +119,102 @@ app.delete('/users/me/token', authenticate, (req, res) => {
             res.status(401).send()
         })
 })
+
+app.post('/todo', authenticate, (req, res) => {
+    // console.log("Req.body = ",JSON.stringify(req.body, undefined, 2));
+    var newtodo = new Todo({
+        completed: req.body.completed,
+        completedAt: req.body.completedAt,
+        task: req.body.task,
+        _creator: req.user._id
+    })
+
+    newtodo.save()
+        .then((doc) => {
+            // console.log("**Document: ",doc);
+            res.send(doc);
+        }, (err) => {
+            // console.log("**Error: ",err);
+            res.status(400).send(err);
+        })
+})
+
+app.get("/todo", authenticate, (req, res) => {
+    Todo.find({_creator: req.user._id})
+        .then((docs) => {
+            res.send(docs);
+        },(err) =>{
+            res.status(400).send(err);
+        })
+})
+
+app.get('/todo/:id', authenticate, (req, res) => {
+    var id = req.params.id;
+    if(!ObjectID.isValid(id)){
+        return res.status(404).send({errorMessage: "Id is not valid"})
+    }
+
+    Todo.findOne({_id: id, _creator: req.user._id})
+        .then((docs) => {
+            if(!docs){
+                return res.status(404).send({errorMessage: "no document found"})
+            }
+            res.send({docs,randomText:'randomText'});
+        }, (err) => {
+            res.status(400).send(err)
+        })
+        .catch((err) => {
+            return res.status(400).send({err});
+        })
+})
+
+app.delete("/todo/:id", authenticate, (req, res) => {
+    var id = req.params.id;
+
+    if(!ObjectID.isValid(id)){
+        return res.status(404).send({errorMessage: 'Invalid Id'});
+    }
+    Todo.findOneAndDelete({_id: id, _creator: req.user._id})
+        .then( (doc) => {
+            if(!doc){
+                return res.status(404).send({errorMessage: 'document not found'});
+            }
+            res.send({doc});
+        }, (err) => {
+            res.statue(400).send(err);
+        })
+})
+
+app.patch('/todo/:id', authenticate, (req, res) => {
+    var id = req.params.id;
+
+    var body = _.pick(req.body, ['task', 'completed']);
+
+    if(!ObjectID.isValid(id)){
+        return res.status(404).send();
+    }
+
+    if(_.isBoolean(body.completed) && body.completed){
+        body.completedAt = new Date();
+    }else{
+        body.completed = false;
+        body.completedAt = null;
+    }
+
+    Todo.findOneAndUpdate({_id: id, _creator: req.user._id}, {
+        $set: body
+    },{new: true})
+    .then((todo) => {
+        if(!todo){
+            return res.status(404).send({errorMessage: "document not found"});
+        }
+        res.send({todo});
+    })
+    .catch((err) => {
+        res.status(400).send({err});
+    })
+})
+
 
 
 
