@@ -62,6 +62,24 @@ app.get('/user/:id', (req, res) => {
         })
 })
 
+// app.get('/todo/:id', (req, res) => {
+//     console.log("!!!!!!!!!!!!!!!!!!!!!!!!")
+//     var id = req.params.id;
+//     if(!ObjectID.isValid(id)){
+//         return res.status(404).send({errorMessage: "Id is not valid"})
+//     }
+
+//     Todo.findOne({_id: id})
+//         .then((docs) => {
+//             if(!docs){
+//                 return res.status(404).send({errorMessage: "no document found"})
+//             }
+//             res.send(docs);
+//         }, (err) => {
+//             res.status(400).send(err)
+//         })
+// })
+
 app.post("/users/login", (req, res) => {
     var usr;
     // console.log('req.body = ',req.body);

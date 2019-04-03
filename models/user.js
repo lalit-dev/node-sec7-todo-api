@@ -48,7 +48,7 @@ userSchema.methods.generateAuthToken = function(){
     // console.log("USER in user.js = ",user);
 
     var access = "auth";
-    var token = jwt.sign({_id: user._id.toHexString(), access}, 'secret-key').toString();
+    var token = jwt.sign({_id: user._id.toHexString(), access}, process.env.JWT_SECRET).toString();
 
     // user.tokens.push({access, token});
     user.tokens = user.tokens.concat([{access, token}]);
@@ -79,7 +79,7 @@ userSchema.statics.findByToken = function(token){
     var User = this;
     // console.log("");
     try{
-        var decoded = jwt.verify(token, 'secret-key');
+        var decoded = jwt.verify(token, process.env.JWT_SECRET);
         // console.log("inside findByToken DECODED = ",decoded);
     }catch (e) {
         return new Promise((resolve, reject) => {
